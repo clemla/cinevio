@@ -33,7 +33,7 @@ Image toute prête, publiée par le dépôt (PC, serveurs et Raspberry Pi) :
 ```bash
 docker run -d --name cinevio -p 7000:7000 --shm-size=512m \
   -e TMDB_API_KEY=ta_cle -v cinevio-data:/data \
-  ghcr.io/TON-PSEUDO/cinevio:latest
+  ghcr.io/broknnn/cinevio:latest
 ```
 
 Ou avec `docker compose up -d` (fichier `docker-compose.yml` du dépôt : mets ta clé dedans). L'image contient Chromium pour les cartes et les classements. Pour l'utiliser hors de chez toi, mets l'addon derrière un reverse proxy en https et indique son adresse dans `PUBLIC_URL`, ou active `CLOUDFLARE_TUNNEL=1`. Toutes les options de `.env.example` marchent en variables d'environnement.

@@ -2,7 +2,7 @@
 services:
   cinevio:
     # Image toute prête (publiée par le dépôt GitHub) ; sinon, construite ici avec « build ».
-    # image: ghcr.io/TON-PSEUDO/cinevio:latest
+    # image: ghcr.io/broknnn/cinevio:latest
     build: .
     container_name: cinevio
     ports:
