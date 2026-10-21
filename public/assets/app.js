@@ -394,7 +394,7 @@
 
       if ($('#install-addon').checked) {
         const manifestUrl = `${linkBase()}/manifest.json`;
-        const retained = oldAddons.filter(a => a.url !== manifestUrl);
+        const retained = (oldAddons || []).filter(a => a.url !== manifestUrl);
         const addons = [...retained, {
           url: manifestUrl, name: info.addonName, enabled: true,
           sort_order: oldAddons.length ? Math.max(...oldAddons.map(a => Number(a.sort_order) || 0)) + 1 : 0,
@@ -434,21 +434,34 @@
     const manifest = `${linkBase()}/manifest.json`;
     $('#manifest-url').value = manifest;
     $('#collection-url').value = `${linkBase()}/collection.json`;
-    $('#install-link').href = manifest.replace(/^https?:\/\//, 'stremio://');
+    $('#manual-install-link').href = manifest.replace(/^https?:\\/\\//, 'stremio://');
     $('#download-collection').href = `${linkBase()}/collection.json?download=1`;
     const waiting = wantsPublic() && tunnel.state !== 'ready';
     const ok = hasTmdb() && !waiting;
-    for (const id of ['install-link', 'download-collection', 'copy-manifest', 'copy-json']) $(`#${id}`).setAttribute('aria-disabled', String(!ok));
+    for (const id of ['manual-install-link', 'download-collection', 'copy-json']) {
+      const node = $(`#${id}`);
+      node.setAttribute('aria-disabled', String(!ok));
+      if ('disabled' in node && node.tagName === 'BUTTON') node.disabled = !ok;
+    }
     const dock = $('#dock-state');
     dock.textContent = !hasTmdb() ? 'Ajoute ta clé TMDB (étape 1) pour installer.'
       : waiting ? 'Lien Cloudflare en cours de création…'
-      : wantsPublic() ? 'Prêt à installer, avec le lien Cloudflare : marche partout.'
-      : 'Prêt à installer : ajoute l\'addon, puis importe les collections sur nuvio.tv.';
+      : wantsPublic() ? 'Liens prêts : tu peux installer Cinévio.'
+      : 'Choisis le mode automatique ou récupère les liens manuels.';
     dock.classList.toggle('ready', ok);
+    const importButton = $('#dock-import');
+    importButton.disabled = installMode === 'automatic' && (!nuvioSession || !$('#nuvio-profile').value || !ok);
+    importButton.setAttribute('aria-disabled', String(importButton.disabled));
+    const profileButton = $('#nuvio-import');
+    if (profileButton && nuvioSession) profileButton.disabled = !$('#nuvio-profile').value || !ok;
     const req = $('#tmdb-req');
     req.textContent = info.serverKeys.tmdb ? 'facultatif sur ce serveur' : state.keys.tmdb ? 'renseignée' : 'obligatoire';
     req.classList.toggle('done', !!state.keys.tmdb || info.serverKeys.tmdb);
     history.replaceState(null, '', `/${cfgString()}/configure`);
+    refreshJsonPreviews().catch(error => {
+      $('#manifest-content').textContent = error.message;
+      $('#collection-content').textContent = error.message;
+    });
   }
 
   let timer = null;
