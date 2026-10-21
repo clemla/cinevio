@@ -636,3 +636,16 @@ button, .btn { font: inherit; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+
+.nuvio-dialog{width:min(520px,calc(100% - 28px));max-height:86vh;padding:0;border:1px solid #ffffff24;border-radius:22px;color:var(--brume);background:#100c1b;box-shadow:0 24px 100px #000a}
+.nuvio-dialog::backdrop{background:#040209c7;backdrop-filter:blur(7px)}
+.nuvio-panel{display:grid;gap:12px;padding:26px}.nuvio-panel[hidden]{display:none}
+.nuvio-head{display:flex;align-items:center;justify-content:space-between;gap:16px}.nuvio-head h2{margin:0;font-size:25px}
+.nuvio-close{border:0;background:transparent;color:#fff;font-size:30px;cursor:pointer}
+.nuvio-panel label{font-size:13px;font-weight:600}
+.nuvio-panel input:not([type=checkbox]),.nuvio-panel select{width:100%;min-width:0;padding:12px;border-radius:10px;border:1px solid #ffffff29;background:#1a1427;color:#fff;font:inherit}
+.nuvio-panel .hint{margin:0;line-height:1.5}.nuvio-check{display:flex;align-items:center;gap:10px;font-weight:400!important}
+.nuvio-check input{width:17px;height:17px;accent-color:#b58aff}.nuvio-error{margin:0;color:#ff8b9b;font-size:13px;overflow-wrap:anywhere}
+.nuvio-status{margin:0;padding:0 26px 20px;color:#a7f3c0;font-size:13px}.nuvio-status:empty{display:none}
+@media(max-width:560px){.nuvio-panel{padding:20px}.nuvio-status{padding:0 20px 18px}}
