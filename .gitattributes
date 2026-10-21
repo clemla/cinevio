@@ -1,0 +1,9 @@
+# Fins de ligne : Unix pour les scripts Linux et Docker, Windows pour les .bat
+* text=auto
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.bat text eol=crlf
+*.gif binary
+*.jpg binary
+*.png binary
+*.woff binary

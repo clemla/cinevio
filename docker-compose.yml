@@ -1,0 +1,19 @@
+# docker compose up -d   → http://localhost:7000/configure
+services:
+  cinevio:
+    # Image toute prête (publiée par le dépôt GitHub) ; sinon, construite ici avec « build ».
+    # image: ghcr.io/TON-PSEUDO/cinevio:latest
+    build: .
+    container_name: cinevio
+    ports:
+      - "7000:7000"
+    environment:
+      TMDB_API_KEY: ""            # clé TMDB (gratuite) : themoviedb.org/settings/api
+      # PUBLIC_URL: "https://cinevio.mondomaine.fr"   # adresse publique, derrière un reverse proxy
+      # FANART_API_KEY: ""
+      # MDBLIST_API_KEY: ""
+      # CLOUDFLARE_TUNNEL: "1"   # lien https *.trycloudflare.com, sans compte
+    volumes:
+      - ./data:/data                # cache, cartes du moment, classements
+    shm_size: "512mb"               # mémoire partagée pour Chromium
+    restart: unless-stopped

@@ -1,0 +1,11 @@
+.git
+.github
+.env
+data
+bin
+node_modules
+_to_delete
+Cinevio-*
+*.zip
+*.mp4
+*.bat

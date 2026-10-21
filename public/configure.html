@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cinévio – configuration</title>
+  <meta name="theme-color" content="#08060f">
+  <link rel="icon" href="/assets/cinevio-mark.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/app.css?v=9">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/configure" aria-label="Cinévio, accueil de la configuration">
+      <img src="/assets/cinevio.png" alt="Cinévio" width="190" height="56">
+    </a>
+    <p class="tagline">Ton accueil Nuvio en français : plateformes, chaînes, genres, sagas, animés et top 10 du moment.</p>
+    <span class="badge" id="demo-badge" hidden>Mode démo : titres fictifs</span>
+  </header>
+
+  <main class="layout">
+    <form class="settings" id="settings" autocomplete="off">
+      <section class="step" aria-labelledby="s1">
+        <h2 id="s1"><span class="num" aria-hidden="true">1</span>Ta clé TMDB</h2>
+        <p class="hint">C'est la seule obligatoire : elle donne les titres, affiches et résumés en français. Elle reste dans ton lien d'installation, alors ne partage pas ce lien.</p>
+        <div class="field">
+          <label for="k-tmdb">Clé TMDB <span class="req" id="tmdb-req">obligatoire</span></label>
+          <div class="keyrow">
+            <input id="k-tmdb" name="tmdb" type="password" spellcheck="false" placeholder="Clé API v3 ou jeton v4">
+            <button type="button" class="ghost toggle-key" aria-label="Afficher la clé TMDB" data-for="k-tmdb">Afficher</button>
+          </div>
+          <a class="getkey" href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">Obtenir une clé TMDB gratuite</a>
+        </div>
+
+        <details class="extras" id="extras">
+          <summary>
+            <span class="sum-title">Options facultatives</span>
+            <span class="sum-note" id="extras-note">Fanart.tv et MDBList. Tout marche sans.</span>
+          </summary>
+          <div class="field">
+            <label for="k-fanart">Fanart.tv <span class="opt" id="fanart-state">logos en haute définition</span></label>
+            <div class="keyrow">
+              <input id="k-fanart" name="fanart" type="password" spellcheck="false" placeholder="Laisse vide si tu n'en as pas">
+              <button type="button" class="ghost toggle-key" aria-label="Afficher la clé Fanart.tv" data-for="k-fanart">Afficher</button>
+            </div>
+            <p class="hint small">Sans clé, les logos viennent de TMDB.</p>
+          </div>
+          <div class="field">
+            <label for="k-mdblist">MDBList <span class="opt" id="mdblist-state">notes IMDb</span></label>
+            <div class="keyrow">
+              <input id="k-mdblist" name="mdblist" type="password" spellcheck="false" placeholder="Laisse vide si tu n'en as pas">
+              <button type="button" class="ghost toggle-key" aria-label="Afficher la clé MDBList" data-for="k-mdblist">Afficher</button>
+            </div>
+            <p class="hint small">Sans clé, la note affichée est celle de TMDB.</p>
+          </div>
+        </details>
+      </section>
+
+      <section class="step" aria-labelledby="s2">
+        <h2 id="s2"><span class="num" aria-hidden="true">2</span>Ce que tu regardes</h2>
+        <fieldset>
+          <legend>Plateformes <span class="count" id="platform-count"></span></legend>
+          <div class="picker" id="platform-chips"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Chaînes <span class="count" id="channel-count"></span></legend>
+          <div class="picker" id="channel-chips"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Collections</legend>
+          <div class="checks">
+            <label class="check"><input type="checkbox" class="switch" id="genres">
+              <span>Genres<small>Action, Comédie, Horreur… seulement ce qui est sur tes plateformes et chaînes</small></span></label>
+            <label class="check"><input type="checkbox" class="switch" id="sagas">
+              <span>Sagas et univers<small>Marvel dans l'ordre de l'histoire, Star Wars, Harry Potter, Astérix…</small></span></label>
+            <label class="check"><input type="checkbox" class="switch" id="anime">
+              <span>Animés<small>Saison en cours, shōnen, isekai, grands studios (MAPPA, ufotable…), Crunchyroll et ADN</small></span></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Sur l'accueil</legend>
+          <div class="checks">
+            <label class="check"><input type="checkbox" class="switch" checked disabled>
+              <span>Top 10 du moment<small>Films et séries en tendance en France, streaming et cinéma</small></span></label>
+            <label class="check"><input type="checkbox" class="switch" id="reality-tv">
+              <span>Télé-réalité FR<small>Les émissions françaises du moment</small></span></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Dans chaque plateforme et chaîne</legend>
+          <div class="checks" id="row-checks"></div>
+        </fieldset>
+      </section>
+
+      <section class="step" aria-labelledby="s3">
+        <h2 id="s3"><span class="num" aria-hidden="true">3</span>Installer</h2>
+        <div class="where" id="where" hidden>
+          <p class="where-title" id="where-title">Où vas-tu utiliser Cinévio ?</p>
+          <div class="seg" role="radiogroup" aria-labelledby="where-title">
+            <label><input type="radio" name="where" value="public" checked><span>Partout<small>Téléphone, télé, hors de chez toi</small></span></label>
+            <label><input type="radio" name="where" value="local"><span>Sur ce PC<small>Nuvio sur cet ordinateur</small></span></label>
+          </div>
+          <p class="tunnel-state" id="tunnel-state" role="status"></p>
+        </div>
+        <p class="hint" id="tunnel-off" hidden>Ces liens ne marchent que sur ce PC. Pour ton téléphone ou ta télé, lance <strong>lancer-cloudflare.bat</strong> : tu auras un lien public Cloudflare.</p>
+        <ol class="howto">
+          <li><strong>Ajoute l'addon</strong> : copie son lien puis, dans Nuvio, Paramètres → Contenu et découverte → Addons.</li>
+          <li><strong>Importe les collections</strong> sur <a href="https://nuvio.tv/" target="_blank" rel="noopener">nuvio.tv</a> : Compte → Collections → Importer, avec le fichier téléchargé. Ajoute l'addon avant, sinon les dossiers restent vides.</li>
+        </ol>
+        <div class="field">
+          <label for="manifest-url">Lien de l'addon</label>
+          <div class="keyrow">
+            <input id="manifest-url" readonly>
+            <button type="button" class="ghost" data-copy="manifest-url">Copier</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="collection-url">Lien des collections</label>
+          <div class="keyrow">
+            <input id="collection-url" readonly>
+            <button type="button" class="ghost" data-copy="collection-url">Copier</button>
+          </div>
+        </div>
+      </section>
+    </form>
+
+    <section class="preview" aria-label="Aperçu de ton accueil Nuvio">
+      <div class="screen" id="screen">
+        <div class="build" id="build" role="status" aria-live="polite" hidden>
+          <div class="build-row">
+            <span class="build-spin" aria-hidden="true"></span>
+            <strong id="build-title">Création des cartes</strong>
+            <span class="build-count" id="build-count"></span>
+          </div>
+          <div class="build-bar"><i id="build-fill"></i></div>
+          <p class="build-note" id="build-note">Tu peux déjà installer : les cartes se mettent à jour toutes seules, ici et dans Nuvio.</p>
+        </div>
+        <div class="home" id="home"></div>
+        <div class="folder" id="folder" hidden>
+          <div class="folder-hero" id="folder-hero">
+            <button type="button" class="back" id="folder-back">Retour à l'accueil</button>
+          </div>
+          <div class="tabs" id="folder-tabs" role="tablist"></div>
+          <div class="grid" id="folder-grid"></div>
+        </div>
+      </div>
+      <p class="screen-note">Ton accueil avec ces réglages. Clique sur une carte pour ouvrir son dossier ; l'ordre des rangées se change ensuite dans Nuvio.</p>
+    </section>
+  </main>
+
+  <div class="dock" role="region" aria-label="Installation">
+    <div class="dock-inner">
+      <p class="dock-state" id="dock-state">Ajoute ta clé TMDB pour installer.</p>
+      <div class="dock-actions">
+        <button type="button" class="btn" id="copy-manifest">Copier le lien de l'addon</button>
+        <a class="btn alt" id="install-link" href="#">Ouvrir dans Nuvio ou Stremio</a>
+        <a class="btn alt" id="download-collection" href="#">Télécharger les collections</a>
+        <button type="button" class="btn ghost-btn" id="copy-json">Copier le JSON</button>
+      </div>
+    </div>
+    <p class="toast" id="toast" role="status" aria-live="polite"></p>
+  </div>
+
+  <script src="/assets/app.js?v=10"></script>
+</body>
+</html>

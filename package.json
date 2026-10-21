@@ -1,0 +1,17 @@
+{
+  "name": "cinevio",
+  "version": "0.2.21",
+  "description": "Addon de métadonnées en français pour Nuvio / Stremio, avec collections préfaites (plateformes, chaînes françaises, genres, sagas, top 10 du moment).",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "demo": "DEMO=1 node src/server.js",
+    "test": "node test/offline.test.js && node test/cache-flixpatrol.test.js && node test/collections.test.js",
+    "cartes": "node scripts/render-covers.js"
+  },
+  "license": "MIT"
+}

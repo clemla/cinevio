@@ -1,0 +1,13 @@
+# Jamais dans le dépôt : tes clés et les données du serveur
+.env
+data/
+bin/
+node_modules/
+
+# Fichiers générés ou personnels
+*.zip
+*.mp4
+_to_delete/
+Cinevio-*/
+.DS_Store
+Thumbs.db
