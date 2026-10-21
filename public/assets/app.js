@@ -245,10 +245,28 @@
     document.querySelectorAll('[data-copy]').forEach((btn) => {
       btn.addEventListener('click', () => copy($(`#${btn.dataset.copy}`).value, 'Lien copié.'));
     });
-    $('#copy-manifest').addEventListener('click', () => copy($('#manifest-url').value, "Lien de l'addon copié. Colle-le dans Nuvio."));
     $('#copy-json').addEventListener('click', async () => {
-      const res = await fetch(`${linkBase()}/collection.json`);
-      copy(JSON.stringify(await res.json(), null, 2), 'JSON des collections copié.');
+      const content = $('#collection-content').textContent;
+      await copy(content, 'JSON des collections copié.');
+    });
+    $('#toggle-nuvio-password').addEventListener('click', () => {
+      const input = $('#nuvio-password');
+      input.type = input.type === 'password' ? 'text' : 'password';
+      $('#toggle-nuvio-password').textContent = input.type === 'password' ? 'Afficher' : 'Masquer';
+    });
+    document.querySelectorAll('input[name="install-mode"]').forEach((radio) => {
+      radio.addEventListener('change', () => setInstallMode(radio.value));
+    });
+    $('#nuvio-login').addEventListener('click', loginNuvio);
+    $('#nuvio-profile').addEventListener('change', () => { $('#nuvio-import').disabled = !$('#nuvio-profile').value; });
+    $('#nuvio-import').addEventListener('click', importNuvio);
+    $('#dock-import').addEventListener('click', () => {
+      if (installMode === 'automatic') {
+        if (nuvioSession && $('#nuvio-profile').value) importNuvio();
+        else { $('#nuvio-email').focus(); toast('Connecte-toi à Nuvio puis choisis un profil.'); }
+      } else {
+        $('#manual-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
   }
 
@@ -267,25 +285,183 @@
     return info.demo || info.serverKeys.tmdb || !!state.keys.tmdb;
   }
 
+  /* ---------- Installation Nuvio : session gardée uniquement en mémoire ---------- */
+  const NUVIO_API = 'https://api.nuvio.tv';
+  const NUVIO_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzgxNTIxMzQ2LCJleHAiOjE5MzkyMDEzNDZ9.tmQaj682pwzehpqlgCDMnySOqiUvpgRbrE43T4VJpDI';
+  let installMode = 'automatic';
+  let nuvioSession = null;
+  let nuvioProfiles = [];
+
+  function setInstallMode(mode) {
+    installMode = mode;
+    $('#automatic-panel').hidden = mode !== 'automatic';
+    $('#manual-panel').hidden = mode !== 'manual';
+    $('#dock-mode').textContent = mode === 'automatic' ? 'Installation automatique' : 'Installation manuelle';
+    $('#dock-import').textContent = mode === 'automatic' ? 'Importer dans Nuvio' : 'Voir les liens manuels';
+    updateLinks();
+  }
+
+  async function nuvioFetch(path, token, options = {}) {
+    const response = await fetch(`${NUVIO_API}${path}`, {
+      ...options,
+      headers: {
+        apikey: NUVIO_KEY,
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options.headers || {}),
+      },
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.message || body.msg || `Nuvio a répondu HTTP ${response.status}`);
+    }
+    const body = await response.text();
+    return body ? JSON.parse(body) : null;
+  }
+
+  function nuvioStatus(message, kind = '') {
+    const node = $('#nuvio-status');
+    node.textContent = message;
+    node.className = `form-status ${kind}`.trim();
+  }
+
+  async function loginNuvio() {
+    const email = $('#nuvio-email').value.trim();
+    const password = $('#nuvio-password').value;
+    if (!email || !password) return nuvioStatus('Renseigne ton e-mail et ton mot de passe.', 'error');
+    const button = $('#nuvio-login');
+    button.disabled = true;
+    button.textContent = 'Connexion…';
+    nuvioStatus('Connexion à Nuvio…');
+    try {
+      const auth = await nuvioFetch('/auth/v1/token?grant_type=password', null, {
+        method: 'POST', body: JSON.stringify({ email, password }),
+      });
+      nuvioSession = { accessToken: auth.access_token, userId: auth.user && auth.user.id };
+      nuvioProfiles = await nuvioFetch('/rest/v1/rpc/sync_pull_profiles', nuvioSession.accessToken, {
+        method: 'POST', body: '{}',
+      }) || [];
+      const select = $('#nuvio-profile');
+      select.replaceChildren(new Option('Choisis un profil…', ''));
+      for (const profile of nuvioProfiles) {
+        select.add(new Option(profile.name || `Profil ${profile.profile_index + 1}`, String(profile.profile_index)));
+      }
+      $('#nuvio-profile-wrap').hidden = false;
+      $('#nuvio-import').disabled = true;
+      $('#nuvio-password').value = '';
+      nuvioStatus(nuvioProfiles.length ? 'Connecté. Choisis le profil de destination.' : 'Connexion réussie, mais aucun profil n’a été trouvé.', nuvioProfiles.length ? 'success' : 'error');
+    } catch (error) {
+      nuvioSession = null;
+      nuvioProfiles = [];
+      $('#nuvio-profile-wrap').hidden = true;
+      nuvioStatus(`Connexion impossible : ${error.message}`, 'error');
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Se connecter';
+    }
+  }
+
+  async function importNuvio() {
+    if (!nuvioSession || !$('#nuvio-profile').value) {
+      nuvioStatus('Connecte-toi puis choisis un profil.', 'error');
+      return;
+    }
+    if (!hasTmdb()) {
+      nuvioStatus('Ajoute ta clé TMDB avant d’importer.', 'error');
+      $('#k-tmdb').focus();
+      return;
+    }
+    const button = $('#nuvio-import');
+    button.disabled = true;
+    button.textContent = 'Import en cours…';
+    nuvioStatus('Récupération des collections et addons existants…');
+    const profileId = Number($('#nuvio-profile').value);
+    const token = nuvioSession.accessToken;
+    try {
+      const [oldCollectionRows, oldAddons, newCollections] = await Promise.all([
+        nuvioFetch('/rest/v1/rpc/sync_pull_collections', token, { method: 'POST', body: JSON.stringify({ p_profile_id: profileId }) }),
+        nuvioFetch(`/rest/v1/addons?select=*&profile_id=eq.${profileId}&order=sort_order`, token),
+        fetch(`${linkBase()}/collection.json`).then(async r => { if (!r.ok) throw new Error('Impossible de générer les collections.'); return r.json(); }),
+      ]);
+      const raw = oldCollectionRows && oldCollectionRows[0] && oldCollectionRows[0].collections_json;
+      const existingCollections = Array.isArray(raw) ? raw : typeof raw === 'string' ? JSON.parse(raw || '[]') : [];
+      const incomingIds = new Set(newCollections.map(c => c.id));
+      const mergedCollections = [...existingCollections.filter(c => !incomingIds.has(c.id)), ...newCollections];
+      await nuvioFetch('/rest/v1/rpc/sync_push_collections', token, {
+        method: 'POST',
+        body: JSON.stringify({ p_profile_id: profileId, p_collections_json: mergedCollections }),
+      });
+
+      if ($('#install-addon').checked) {
+        const manifestUrl = `${linkBase()}/manifest.json`;
+        const retained = (oldAddons || []).filter(a => a.url !== manifestUrl);
+        const addons = [...retained, {
+          url: manifestUrl, name: info.addonName, enabled: true,
+          sort_order: oldAddons.length ? Math.max(...oldAddons.map(a => Number(a.sort_order) || 0)) + 1 : 0,
+        }];
+        await nuvioFetch('/rest/v1/rpc/sync_push_addons', token, {
+          method: 'POST',
+          body: JSON.stringify({ p_profile_id: profileId, p_addons: addons.map(({url,name,enabled,sort_order}) => ({url,name,enabled,sort_order})) }),
+        });
+      }
+      nuvioStatus(`Import terminé : ${newCollections.length} collections ajoutées au profil ${($('#nuvio-profile option:checked').textContent || '').trim()}.${$('#install-addon').checked ? ' Addon installé.' : ''}`, 'success');
+      toast('Import Nuvio terminé.');
+    } catch (error) {
+      nuvioStatus(`Import impossible : ${error.message}`, 'error');
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Importer dans ce profil';
+    }
+  }
+
+  async function refreshJsonPreviews() {
+    const manifestUrl = $('#manifest-url').value;
+    const collectionUrl = $('#collection-url').value;
+    if (!manifestUrl || !collectionUrl || !hasTmdb()) {
+      $('#manifest-content').textContent = 'Ajoute ta clé TMDB pour générer le manifest.';
+      $('#collection-content').textContent = 'Ajoute ta clé TMDB pour générer les collections.';
+      return;
+    }
+    const [manifest, collections] = await Promise.all([
+      fetch(manifestUrl).then(r => r.ok ? r.json() : Promise.reject(new Error('Manifest indisponible'))),
+      fetch(collectionUrl).then(r => r.ok ? r.json() : Promise.reject(new Error('Collections indisponibles'))),
+    ]);
+    $('#manifest-content').textContent = JSON.stringify(manifest, null, 2);
+    $('#collection-content').textContent = JSON.stringify(collections, null, 2);
+  }
+
   function updateLinks() {
     const manifest = `${linkBase()}/manifest.json`;
     $('#manifest-url').value = manifest;
     $('#collection-url').value = `${linkBase()}/collection.json`;
-    $('#install-link').href = manifest.replace(/^https?:\/\//, 'stremio://');
+    $('#manual-install-link').href = manifest.replace(/^https?:\\/\\//, 'stremio://');
     $('#download-collection').href = `${linkBase()}/collection.json?download=1`;
     const waiting = wantsPublic() && tunnel.state !== 'ready';
     const ok = hasTmdb() && !waiting;
-    for (const id of ['install-link', 'download-collection', 'copy-manifest', 'copy-json']) $(`#${id}`).setAttribute('aria-disabled', String(!ok));
+    for (const id of ['manual-install-link', 'download-collection', 'copy-json']) {
+      const node = $(`#${id}`);
+      node.setAttribute('aria-disabled', String(!ok));
+      if ('disabled' in node && node.tagName === 'BUTTON') node.disabled = !ok;
+    }
     const dock = $('#dock-state');
     dock.textContent = !hasTmdb() ? 'Ajoute ta clé TMDB (étape 1) pour installer.'
       : waiting ? 'Lien Cloudflare en cours de création…'
-      : wantsPublic() ? 'Prêt à installer, avec le lien Cloudflare : marche partout.'
-      : 'Prêt à installer : ajoute l\'addon, puis importe les collections sur nuvio.tv.';
+      : wantsPublic() ? 'Liens prêts : tu peux installer Cinévio.'
+      : 'Choisis le mode automatique ou récupère les liens manuels.';
     dock.classList.toggle('ready', ok);
+    const importButton = $('#dock-import');
+    importButton.disabled = installMode === 'automatic' && (!nuvioSession || !$('#nuvio-profile').value || !ok);
+    importButton.setAttribute('aria-disabled', String(importButton.disabled));
+    const profileButton = $('#nuvio-import');
+    if (profileButton && nuvioSession) profileButton.disabled = !$('#nuvio-profile').value || !ok;
     const req = $('#tmdb-req');
     req.textContent = info.serverKeys.tmdb ? 'facultatif sur ce serveur' : state.keys.tmdb ? 'renseignée' : 'obligatoire';
     req.classList.toggle('done', !!state.keys.tmdb || info.serverKeys.tmdb);
     history.replaceState(null, '', `/${cfgString()}/configure`);
+    refreshJsonPreviews().catch(error => {
+      $('#manifest-content').textContent = error.message;
+      $('#collection-content').textContent = error.message;
+    });
   }
 
   let timer = null;
@@ -528,6 +704,7 @@
     buildForm();
     $('#folder-back').addEventListener('click', closeFolder);
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#folder').hidden) closeFolder(); });
+    setInstallMode('automatic');
     updateLinks();
     renderPreview();
     watchCovers(info.covers);
