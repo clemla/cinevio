@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/app.css?v=9">
+  <link rel="stylesheet" href="/assets/app.css?v=10">
 </head>
 <body>
   <header class="top">
@@ -94,33 +94,87 @@
         </fieldset>
       </section>
 
-      <section class="step" aria-labelledby="s3">
-        <h2 id="s3"><span class="num" aria-hidden="true">3</span>Installer</h2>
-        <div class="where" id="where" hidden>
-          <p class="where-title" id="where-title">Où vas-tu utiliser Cinévio ?</p>
-          <div class="seg" role="radiogroup" aria-labelledby="where-title">
-            <label><input type="radio" name="where" value="public" checked><span>Partout<small>Téléphone, télé, hors de chez toi</small></span></label>
-            <label><input type="radio" name="where" value="local"><span>Sur ce PC<small>Nuvio sur cet ordinateur</small></span></label>
-          </div>
-          <p class="tunnel-state" id="tunnel-state" role="status"></p>
+      <section class="step install-step" aria-labelledby="s3">
+        <h2 id="s3"><span class="num" aria-hidden="true">3</span>Installation</h2>
+        <p class="hint">Choisis comment tu veux ajouter Cinévio à Nuvio.</p>
+
+        <div class="mode-picker" role="radiogroup" aria-label="Mode d'installation">
+          <label class="mode-card">
+            <input type="radio" name="install-mode" value="automatic" checked>
+            <span class="mode-icon" aria-hidden="true">✦</span>
+            <span class="mode-copy"><strong>Automatique</strong><small>Connecte ton compte Nuvio et choisis un profil.</small></span>
+          </label>
+          <label class="mode-card">
+            <input type="radio" name="install-mode" value="manual">
+            <span class="mode-icon" aria-hidden="true">↗</span>
+            <span class="mode-copy"><strong>Manuel</strong><small>Récupère les liens et importe les collections toi-même.</small></span>
+          </label>
         </div>
-        <p class="hint" id="tunnel-off" hidden>Ces liens ne marchent que sur ce PC. Pour ton téléphone ou ta télé, lance <strong>lancer-cloudflare.bat</strong> : tu auras un lien public Cloudflare.</p>
-        <ol class="howto">
-          <li><strong>Ajoute l'addon</strong> : copie son lien puis, dans Nuvio, Paramètres → Contenu et découverte → Addons.</li>
-          <li><strong>Importe les collections</strong> sur <a href="https://nuvio.tv/" target="_blank" rel="noopener">nuvio.tv</a> : Compte → Collections → Importer, avec le fichier téléchargé. Ajoute l'addon avant, sinon les dossiers restent vides.</li>
-        </ol>
-        <div class="field">
-          <label for="manifest-url">Lien de l'addon</label>
-          <div class="keyrow">
-            <input id="manifest-url" readonly>
-            <button type="button" class="ghost" data-copy="manifest-url">Copier</button>
+
+        <div class="install-panel" id="automatic-panel">
+          <div class="panel-heading">
+            <h3>Connecte-toi à Nuvio</h3>
+            <span class="secure-label">Connexion directe</span>
+          </div>
+          <p class="hint small">Tes identifiants servent uniquement à te connecter. Le mot de passe n'est pas enregistré par Cinévio.</p>
+          <div class="field">
+            <label for="nuvio-email">E-mail Nuvio</label>
+            <input id="nuvio-email" type="text" autocomplete="username" inputmode="email" placeholder="toi@exemple.com">
+          </div>
+          <div class="field">
+            <label for="nuvio-password">Mot de passe</label>
+            <div class="keyrow">
+              <input id="nuvio-password" type="password" autocomplete="current-password" placeholder="Mot de passe Nuvio">
+              <button type="button" class="ghost" id="toggle-nuvio-password">Afficher</button>
+            </div>
+          </div>
+          <button type="button" class="btn panel-button" id="nuvio-login">Se connecter</button>
+          <p class="form-status" id="nuvio-status" role="status" aria-live="polite"></p>
+          <div id="nuvio-profile-wrap" hidden>
+            <div class="field">
+              <label for="nuvio-profile">Profil Nuvio de destination</label>
+              <select id="nuvio-profile"><option value="">Choisis un profil…</option></select>
+            </div>
+            <label class="check addon-check">
+              <input type="checkbox" class="switch" id="install-addon" checked>
+              <span>Installer aussi l'addon<small>Ajoute Cinévio à la liste des addons de ce profil.</small></span>
+            </label>
+            <button type="button" class="btn panel-button" id="nuvio-import" disabled>Importer dans ce profil</button>
           </div>
         </div>
-        <div class="field">
-          <label for="collection-url">Lien des collections</label>
-          <div class="keyrow">
-            <input id="collection-url" readonly>
-            <button type="button" class="ghost" data-copy="collection-url">Copier</button>
+
+        <div class="install-panel" id="manual-panel" hidden>
+          <div class="panel-heading"><h3>1. Installer l'addon</h3></div>
+          <p class="hint small">Ajoute d'abord l'addon dans Nuvio pour que les collections puissent utiliser ses catalogues.</p>
+          <a class="btn panel-button" id="manual-install-link" href="#" aria-disabled="true">Installer avec Nuvio / Stremio</a>
+          <div class="field">
+            <label for="manifest-url">Lien du manifest</label>
+            <div class="keyrow">
+              <input id="manifest-url" readonly>
+              <button type="button" class="ghost" data-copy="manifest-url">Copier</button>
+            </div>
+            <details class="json-details">
+              <summary>Voir le contenu du manifest</summary>
+              <pre id="manifest-content" class="json-content">Génération du manifest…</pre>
+            </details>
+          </div>
+
+          <div class="panel-heading collection-heading"><h3>2. Importer les collections</h3></div>
+          <p class="hint small">Télécharge le fichier JSON puis importe-le sur <a href="https://nuvio.tv/" target="_blank" rel="noopener">nuvio.tv</a> → Compte → Collections → Importer.</p>
+          <div class="field">
+            <label for="collection-url">Lien des collections</label>
+            <div class="keyrow">
+              <input id="collection-url" readonly>
+              <button type="button" class="ghost" data-copy="collection-url">Copier</button>
+            </div>
+            <div class="manual-actions">
+              <a class="btn alt" id="download-collection" href="#" aria-disabled="true">Télécharger le .json</a>
+              <button type="button" class="ghost" id="copy-json">Copier le JSON</button>
+            </div>
+            <details class="json-details">
+              <summary>Voir le contenu des collections</summary>
+              <pre id="collection-content" class="json-content">Génération des collections…</pre>
+            </details>
           </div>
         </div>
       </section>
@@ -154,15 +208,13 @@
     <div class="dock-inner">
       <p class="dock-state" id="dock-state">Ajoute ta clé TMDB pour installer.</p>
       <div class="dock-actions">
-        <button type="button" class="btn" id="copy-manifest">Copier le lien de l'addon</button>
-        <a class="btn alt" id="install-link" href="#">Ouvrir dans Nuvio ou Stremio</a>
-        <a class="btn alt" id="download-collection" href="#">Télécharger les collections</a>
-        <button type="button" class="btn ghost-btn" id="copy-json">Copier le JSON</button>
+        <span class="dock-mode" id="dock-mode">Installation automatique</span>
+        <button type="button" class="btn" id="dock-import">Importer dans Nuvio</button>
       </div>
     </div>
     <p class="toast" id="toast" role="status" aria-live="polite"></p>
   </div>
 
-  <script src="/assets/app.js?v=10"></script>
+  <script src="/assets/app.js?v=11"></script>
 </body>
 </html>
