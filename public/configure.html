@@ -158,11 +158,28 @@
         <a class="btn alt" id="install-link" href="#">Ouvrir dans Nuvio ou Stremio</a>
         <a class="btn alt" id="download-collection" href="#">Télécharger les collections</a>
         <button type="button" class="btn ghost-btn" id="copy-json">Copier le JSON</button>
+        <button type="button" class="btn" id="nuvio-import-open">Importer sur Nuvio</button>
       </div>
     </div>
     <p class="toast" id="toast" role="status" aria-live="polite"></p>
   </div>
 
+  <dialog class="nuvio-dialog" id="nuvio-dialog">
+    <form id="nuvio-login" class="nuvio-panel">
+      <div class="nuvio-head"><h2>Connecter Nuvio</h2><button type="button" data-close class="nuvio-close">×</button></div>
+      <p class="hint">Connexion directe à Nuvio. Le mot de passe et le jeton ne sont pas enregistrés par Cinévio.</p>
+      <label for="nuvio-email">Adresse e-mail</label><input id="nuvio-email" type="email" autocomplete="username" required>
+      <label for="nuvio-password">Mot de passe</label><input id="nuvio-password" type="password" autocomplete="current-password" required>
+      <p class="nuvio-error" id="nuvio-login-error" role="alert"></p><button class="btn" type="submit" id="nuvio-login-submit">Se connecter</button>
+    </form>
+    <form id="nuvio-import" class="nuvio-panel" hidden>
+      <div class="nuvio-head"><h2>Choisir un profil</h2><button type="button" data-close class="nuvio-close">×</button></div>
+      <label for="nuvio-profile">Profil Nuvio</label><select id="nuvio-profile" required></select>
+      <label class="nuvio-check"><input id="nuvio-add-addon" type="checkbox" checked> Ajouter aussi l’addon Cinévio</label>
+      <p class="nuvio-error" id="nuvio-import-error" role="alert"></p><button class="btn" type="submit" id="nuvio-import-submit">Importer</button>
+    </form><p class="nuvio-status" id="nuvio-status" role="status"></p>
+  </dialog>
   <script src="/assets/app.js?v=10"></script>
+  <script src="/assets/nuvio-import.js?v=1"></script>
 </body>
 </html>
