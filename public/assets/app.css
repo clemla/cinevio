@@ -650,7 +650,7 @@ button, .btn { font: inherit; cursor: pointer; }
 .mode-copy strong { font-size: 14px; }
 .mode-copy small { margin-top: 3px; color: var(--brume); font-size: 12px; line-height: 1.35; }
 .install-panel { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--trait); }
-.install-panel[hidden] { display: none; }
+.install-panel[hidden] { display: none !important; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 4px; }
 .panel-heading h3 { margin: 0; font-size: 16px; }
 .secure-label { color: var(--ok); font-size: 12px; white-space: nowrap; }
